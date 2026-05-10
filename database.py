@@ -106,6 +106,39 @@ def get_order_by_id(order_id):
 
     return result
 
+def cancel_order(order_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE siparisler
+        SET durum = ?
+        WHERE id = ?
+    """, ("İptal Edildi", order_id))
+
+    conn.commit()
+
+    affected = cursor.rowcount
+
+    conn.close()
+
+    return affected > 0
+
+def get_low_stock_products():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT isim, stok_miktari
+        FROM urunler
+        WHERE stok_miktari <= 5
+    """)
+
+    result = cursor.fetchall()
+
+    conn.close()
+
+    return result
 
 def get_product_by_name(product_name):
     conn = get_connection()

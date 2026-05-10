@@ -4,7 +4,9 @@ import re
 
 from database import (
     get_order_by_id,
-    get_product_by_name
+    get_product_by_name,
+    cancel_order,
+    get_low_stock_products,
 )
 
 from dotenv import load_dotenv
@@ -20,6 +22,33 @@ URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash
 def ask_gemini(user_query):
 
     context = ""
+
+    #Düşük stok (işletme için)
+    if "düşük stok" in user_query.lower():
+
+        products = get_low_stock_products()
+
+        if products:
+            return f"Düşük stoklu ürünler: {products}"
+
+        return "Düşük stoklu ürün bulunmuyor."
+
+    # Sipariş iptal
+    if "iptal" in user_query.lower():
+
+        order_match = re.search(r'\d+', user_query)
+
+        if order_match:
+
+            order_id = int(order_match.group())
+
+            success = cancel_order(order_id)
+
+            if success:
+                return f"{order_id} numaralı siparişiniz başarıyla iptal edildi."
+
+            else:
+                return "İptal edilecek sipariş bulunamadı."
 
     # Sipariş numarası arıyoruz
     order_match = re.search(r'\d+', user_query)
@@ -50,6 +79,8 @@ def ask_gemini(user_query):
             context = f"Ürün Bilgileri: {products}"
         else:
             context = "Ürün bulunamadı."
+
+
 
     prompt = f"""
     Sen bir KOBİ müşteri destek asistanısın.
