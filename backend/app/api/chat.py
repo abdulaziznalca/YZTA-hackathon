@@ -33,7 +33,7 @@ async def chat(request: ChatRequest, db: Session = Depends(get_db)):
         user_message=request.message,
         ai_response=result["final_response"],
         intent=result["intent"],
-        extracted_product=result["extracted_params"].get("product_name"),
+        extracted_product=(result["extracted_params"].get("product_name") or "").strip().title() or None,
         extracted_order=result["extracted_params"].get("order_number"),
     )
     db.add(log)
