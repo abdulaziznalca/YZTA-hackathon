@@ -4,7 +4,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
-import { MessageSquare, LayoutDashboard, Bot } from "lucide-react";
+import { MessageSquare, LayoutDashboard, Bot, BarChart3 } from "lucide-react";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -51,6 +51,13 @@ export default function RootLayout({
               >
                 <LayoutDashboard className="h-4 w-4" />
                 Dashboard
+              </Link>
+              <Link
+                href="/analytics"
+                className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
+              >
+                <BarChart3 className="h-4 w-4" />
+                Analytics
               </Link>
             </nav>
           </aside>
