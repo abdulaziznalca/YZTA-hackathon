@@ -49,4 +49,6 @@ class ChatLog(Base):
     user_message = Column(Text, nullable=False)
     ai_response = Column(Text, nullable=False)
     intent = Column(String, nullable=True)
+    extracted_product = Column(String, nullable=True)
+    extracted_order = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

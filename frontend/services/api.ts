@@ -1,4 +1,4 @@
-import type { ChatResponse, DashboardSummary, Order, Product } from "@/types";
+import type { ChatResponse, DashboardSummary, Order, Product, AnalyticsSummary  } from "@/types";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -27,5 +27,12 @@ export async function fetchOrders(): Promise<Order[]> {
 export async function fetchStock(): Promise<Product[]> {
   const res = await fetch(`${BASE}/api/stock`, { cache: "no-store" });
   if (!res.ok) throw new Error("Stok bilgisi alınamadı");
+  return res.json();
+}
+
+
+export async function fetchAnalyticsSummary(hours: number = 24): Promise<AnalyticsSummary> {
+  const res = await fetch(`${BASE}/api/analytics/summary?hours=${hours}`, { cache: "no-store" });
+  if (!res.ok) throw new Error("Analytics verisi alınamadı");
   return res.json();
 }

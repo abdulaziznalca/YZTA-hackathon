@@ -31,3 +31,33 @@ export interface DashboardSummary {
   total_products: number;
   critical_stock: { isim: string; stok_miktari: number }[];
 }
+
+export interface IntentCount {
+  intent: string;
+  count: number;
+}
+
+export interface ProductQueryItem {
+  product_name: string;
+  query_count: number;
+  current_stock: number | null;
+  stock_status: "ok" | "low" | "critical" | "out_of_stock" | "unknown";
+}
+
+export interface AnalyticsAlert {
+  type: string;
+  message: string;
+  severity: "high" | "medium" | "low";
+}
+
+export interface AnalyticsStats {
+  total_interactions: number;
+  intent_distribution: IntentCount[];
+}
+
+export interface AnalyticsSummary {
+  period_hours: number;
+  stats: AnalyticsStats;
+  top_queried_products: ProductQueryItem[];
+  alerts: AnalyticsAlert[];
+}

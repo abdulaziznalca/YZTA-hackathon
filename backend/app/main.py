@@ -8,7 +8,7 @@ from app.config import settings
 from app.database import create_tables
 from app.seed.seed_data import seed
 from app.services import rag_service
-from app.api import orders, shipments, stock, dashboard, chat
+from app.api import orders, shipments, stock, dashboard, chat, analytics
 
 _POLICY_FILE = Path(__file__).parent.parent.parent / "docs" / "policy.md"
 
@@ -39,7 +39,7 @@ app.include_router(shipments.router)
 app.include_router(stock.router)
 app.include_router(dashboard.router)
 app.include_router(chat.router)
-
+app.include_router(analytics.router)
 
 @app.get("/")
 def root():
