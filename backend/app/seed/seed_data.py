@@ -1,5 +1,6 @@
+from datetime import datetime, timedelta
 from app.database import SessionLocal
-from app.models.db_models import Product, Order, Shipment
+from app.models.db_models import Product, Order, Shipment, ChatLog
 
 
 def seed():
@@ -73,6 +74,34 @@ def seed():
 
         for name, stock, price in products_data:
             db.add(Product(name=name, stock=stock, price=price))
+
+        chat_logs_data = [
+            {"user_message": "Lavanta sabunu stokta var mı?", "ai_response": "Lavanta Sabunu stokta mevcut, ancak sadece 2 adet kaldı.", "intent": "stock_query", "extracted_product": "Lavanta Sabunu", "hours_ago": 2},
+            {"user_message": "Zeytinyağı fiyatı ne kadar?", "ai_response": "Zeytinyağı 1L fiyatı 450 TL'dir.", "intent": "stock_query", "extracted_product": "Zeytinyağı", "hours_ago": 3},
+            {"user_message": "128 numaralı siparişim nerede?", "ai_response": "ORD-128 numaralı siparişiniz kargoya verildi.", "intent": "shipment_status", "extracted_order": "128", "hours_ago": 4},
+            {"user_message": "Kargom ne zaman gelir?", "ai_response": "Tahmini teslimat tarihiniz 13 Mayıs 2026.", "intent": "shipment_status", "extracted_order": "128", "hours_ago": 5},
+            {"user_message": "El yapımı erişte var mı?", "ai_response": "Üzgünüm, El Yapımı Erişte şu anda stokta yok.", "intent": "stock_query", "extracted_product": "El Yapımı Erişte", "hours_ago": 6},
+            {"user_message": "İade politikanız nedir?", "ai_response": "14 gün içinde iade yapabilirsiniz.", "intent": "policy_question", "hours_ago": 7},
+            {"user_message": "Siparişimi iptal etmek istiyorum", "ai_response": "İptal talebiniz alındı.", "intent": "policy_question", "hours_ago": 8},
+            {"user_message": "Ürün hasarlı geldi", "ai_response": "Şikayetiniz kaydedildi, en kısa sürede dönüş yapılacak.", "intent": "complaint", "hours_ago": 9},
+            {"user_message": "Lavanta sabunu almak istiyorum", "ai_response": "Lavanta Sabunu stokta, 120 TL.", "intent": "stock_query", "extracted_product": "Lavanta Sabunu", "hours_ago": 10},
+            {"user_message": "130 sipariş durumu", "ai_response": "ORD-130 numaralı siparişiniz gecikti.", "intent": "order_status", "extracted_order": "130", "hours_ago": 11},
+            {"user_message": "Elma sirkesi kaç adet kaldı?", "ai_response": "Elma Sirkesi stokta 3 adet kaldı, kritik seviyede.", "intent": "stock_query", "extracted_product": "Elma Sirkesi", "hours_ago": 12},
+            {"user_message": "Bugünkü özet rapor", "ai_response": "Bugün 10 sipariş, 3 geciken var.", "intent": "manager_summary", "hours_ago": 1},
+        ]
+
+        now = datetime.utcnow()
+        for log_data in chat_logs_data:
+            hours_ago = log_data.pop("hours_ago")
+            log = ChatLog(
+                user_message=log_data["user_message"],
+                ai_response=log_data["ai_response"],
+                intent=log_data["intent"],
+                extracted_product=log_data.get("extracted_product"),
+                extracted_order=log_data.get("extracted_order"),
+                created_at=now - timedelta(hours=hours_ago),
+            )
+            db.add(log)
 
         db.commit()
     finally:
