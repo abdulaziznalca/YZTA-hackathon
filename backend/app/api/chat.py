@@ -17,10 +17,12 @@ _executor = ThreadPoolExecutor(max_workers=4)
 async def chat(request: ChatRequest, db: Session = Depends(get_db)):
     initial_state = {
         "user_message": request.message,
-        "intent": "",
+        "intents": [],
         "extracted_params": {},
-        "tool_result": "",
+        "pending_agents": [],
+        "agent_results": [],
         "final_response": "",
+        "escalated_to": None,
     }
 
     loop = asyncio.get_running_loop()
@@ -29,17 +31,20 @@ async def chat(request: ChatRequest, db: Session = Depends(get_db)):
         lambda: agent_graph.invoke(initial_state),
     )
 
+    intents_str = ",".join(result.get("intents", []))
+    params = result.get("extracted_params", {})
+
     log = ChatLog(
         user_message=request.message,
         ai_response=result["final_response"],
-        intent=result["intent"],
-        extracted_product=(result["extracted_params"].get("product_name") or "").strip().title() or None,
-        extracted_order=result["extracted_params"].get("order_number"),
+        intent=intents_str or None,
+        extracted_product=(params.get("product_name") or "").strip().title() or None,
+        extracted_order=params.get("order_number"),
     )
     db.add(log)
     db.commit()
 
     return ChatResponse(
         response=result["final_response"],
-        intent=result["intent"],
+        intent=intents_str,
     )
