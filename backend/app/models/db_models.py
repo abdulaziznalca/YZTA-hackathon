@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Text
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Text, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, relationship
 
 
@@ -69,3 +69,43 @@ class ChatLog(Base):
     extracted_product = Column(String, nullable=True)
     extracted_order = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+    # WhatsApp channel fields
+    channel = Column(String, nullable=False, default="web")  # "web" | "whatsapp"
+    external_message_id = Column(String, nullable=True, index=True)
+    sender_phone = Column(String, nullable=True)  # masked: +90****1234
+
+
+class SupportTicket(Base):
+    __tablename__ = "support_tickets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    ticket_no = Column(String, unique=True, nullable=False, index=True)
+    type = Column(String, nullable=False)        # cancel_request | complaint | stock_alert
+    status = Column(String, nullable=False, default="open")  # open | approved | rejected | resolved
+    source = Column(String, nullable=False, default="web_chat")  # web_chat | api | whatsapp
+    customer_name = Column(String, nullable=True)
+    order_number = Column(String, nullable=True)
+    product_id = Column(Integer, ForeignKey("products.id"), nullable=True)
+    subject = Column(String, nullable=False)
+    description = Column(Text, nullable=False)
+    meta_json = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    action_logs = relationship("ActionLog", back_populates="ticket")
+
+
+class ActionLog(Base):
+    __tablename__ = "action_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    ticket_id = Column(Integer, ForeignKey("support_tickets.id"), nullable=True)
+    action = Column(String, nullable=False)
+    actor = Column(String, nullable=False, default="agent")  # agent | system | user
+    payload_json = Column(Text, nullable=True)
+    result = Column(String, nullable=False, default="ok")    # ok | error
+    error_message = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    ticket = relationship("SupportTicket", back_populates="action_logs")
