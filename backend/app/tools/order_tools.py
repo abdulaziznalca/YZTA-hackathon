@@ -124,6 +124,7 @@ def create_order(customer_name: str, city: str, items: list[dict]) -> dict:
         order.total_amount = float(total)
         db.commit()
         return {
+            "id": order.id,
             "order_number": order.order_number,
             "customer_name": order.customer_name,
             "city": order.city,
@@ -234,8 +235,10 @@ def update_order_items(
         db.commit()
 
         return {
+            "id": order.id,
             "order_number": order.order_number,
             "customer_name": order.customer_name,
+            "city": order.city,
             "status": order.status,
             "estimated_delivery": order.estimated_delivery,
             "total_amount": order.total_amount,
