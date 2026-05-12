@@ -2,6 +2,7 @@ from app.services.gemini_service import route_intents
 
 _INTENT_TO_AGENT = {
     "order_status": "order_agent",
+    "cancel_order": "order_agent",
     "shipment_status": "shipment_agent",
     "stock_query": "stock_agent",
     "policy_question": "policy_agent",

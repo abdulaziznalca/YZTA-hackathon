@@ -9,3 +9,4 @@ class AgentState(TypedDict):
     agent_results: list[dict]
     final_response: str
     escalated_to: Optional[str]
+    tickets: list[dict]

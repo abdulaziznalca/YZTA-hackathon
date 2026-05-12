@@ -27,6 +27,7 @@ def route_intents(message: str) -> dict:
 Intent seçenekleri (birden fazla seçilebilir):
 - shipment_status: kargo/teslimat/nerede/takip soruları
 - order_status: sipariş durumu soruları
+- cancel_order: sipariş iptal etme isteği
 - stock_query: stok/mevcut mu/kaç adet soruları
 - policy_question: iade/hasar/garanti/politika soruları
 - complaint: şikayet/memnuniyetsizlik
