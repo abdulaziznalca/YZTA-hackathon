@@ -24,6 +24,60 @@ class OrderResponse(BaseModel):
         from_attributes = True
 
 
+class OrderItemResponse(BaseModel):
+    product_id: int
+    product_name: str
+    quantity: int
+    unit_price: float
+
+
+class OrderDetailResponse(BaseModel):
+    id: int
+    order_number: str
+    customer_name: str
+    city: Optional[str]
+    status: str
+    estimated_delivery: Optional[str]
+    total_amount: float
+    items: list[OrderItemResponse]
+
+    class Config:
+        from_attributes = True
+
+
+class OrderCreateItem(BaseModel):
+    product_name: str
+    quantity: int
+
+
+class OrderCreateRequest(BaseModel):
+    customer_name: str
+    city: str
+    items: list[OrderCreateItem]
+
+
+class OrderCancelRequest(BaseModel):
+    customer_name: str
+    order_number: str
+
+
+class OrderUpdateItem(BaseModel):
+    product_name: str
+    quantity: int
+
+
+class OrderUpdateRequest(BaseModel):
+    order_number: str
+    customer_name: str
+    add_items: list[OrderUpdateItem] = []
+    remove_items: list[OrderUpdateItem] = []
+
+
+class StockUpdateRequest(BaseModel):
+    product_name: str
+    new_stock: int
+
+
 class ShipmentResponse(BaseModel):
     id: int
     order_id: int
