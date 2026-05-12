@@ -22,12 +22,16 @@ def _call_gemini(prompt: str) -> str:
 
 def detect_intent(message: str) -> dict:
     prompt = f"""Aşağıdaki kullanıcı mesajını analiz et ve SADECE şu JSON formatında yanıt ver, başka hiçbir şey yazma:
-{{"intent": "...", "order_number": null, "product_name": null}}
+{{"intent": "...", "order_number": null, "product_name": null, "customer_name": null, "city": null, "quantity": null, "update_action": null}}
 
 Intent seçenekleri:
 - shipment_status: kargo/teslimat/nerede/takip soruları
 - order_status: sipariş durumu soruları
 - stock_query: stok/mevcut mu/kaç adet soruları
+- order_cancel: sipariş iptal etme talebi
+- order_create: yeni sipariş oluşturma talebi
+- order_update: siparişi güncelleme (ürün ekle/çıkar) talebi
+- stock_update: stok güncelleme (işletmeci) talebi
 - policy_question: iade/hasar/garanti/politika soruları
 - complaint: şikayet/memnuniyetsizlik
 - manager_summary: yönetici/özet/dashboard/rapor talepleri
@@ -35,6 +39,10 @@ Intent seçenekleri:
 
 Sipariş numarası varsa "order_number" alanına yaz (sadece rakamları: "128", "1001" gibi).
 Ürün adı varsa "product_name" alanına yaz.
+Müşteri adı/soyadı (varsa) "customer_name" alanına yaz.
+Şehir bilgisi (varsa) "city" alanına yaz.
+Miktar (varsa) "quantity" alanına sayı yaz.
+"update_action": sadece "add" veya "remove" olabilir (sipariş güncellemede ürün ekle/çıkar niyeti varsa).
 
 Mesaj: {message}"""
 
@@ -46,9 +54,21 @@ Mesaj: {message}"""
             "intent": result.get("intent", "unknown"),
             "order_number": result.get("order_number"),
             "product_name": result.get("product_name"),
+            "customer_name": result.get("customer_name"),
+            "city": result.get("city"),
+            "quantity": result.get("quantity"),
+            "update_action": result.get("update_action"),
         }
     except (json.JSONDecodeError, AttributeError):
-        return {"intent": "unknown", "order_number": None, "product_name": None}
+        return {
+            "intent": "unknown",
+            "order_number": None,
+            "product_name": None,
+            "customer_name": None,
+            "city": None,
+            "quantity": None,
+            "update_action": None,
+        }
 
 
 def generate_response(context: str, message: str) -> str:
