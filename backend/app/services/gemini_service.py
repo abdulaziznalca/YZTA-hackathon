@@ -20,21 +20,21 @@ def _call_gemini(prompt: str) -> str:
     return ""
 
 
-def detect_intent(message: str) -> dict:
+def route_intents(message: str) -> dict:
     prompt = f"""Aşağıdaki kullanıcı mesajını analiz et ve SADECE şu JSON formatında yanıt ver, başka hiçbir şey yazma:
-{{"intent": "...", "order_number": null, "product_name": null}}
+{{"intents": [...], "order_number": null, "product_name": null}}
 
-Intent seçenekleri:
+Intent seçenekleri (birden fazla seçilebilir):
 - shipment_status: kargo/teslimat/nerede/takip soruları
 - order_status: sipariş durumu soruları
 - stock_query: stok/mevcut mu/kaç adet soruları
 - policy_question: iade/hasar/garanti/politika soruları
 - complaint: şikayet/memnuniyetsizlik
 - manager_summary: yönetici/özet/dashboard/rapor talepleri
-- unknown: diğer tüm sorular
 
 Sipariş numarası varsa "order_number" alanına yaz (sadece rakamları: "128", "1001" gibi).
 Ürün adı varsa "product_name" alanına yaz.
+Hiçbir intent uymuyorsa "intents" listesini boş bırak: []
 
 Mesaj: {message}"""
 
@@ -42,24 +42,27 @@ Mesaj: {message}"""
     clean = re.sub(r"```(?:json)?\s*\n?", "", raw).strip().rstrip("`").strip()
     try:
         result = json.loads(clean)
+        intents = result.get("intents", [])
+        if not isinstance(intents, list):
+            intents = []
         return {
-            "intent": result.get("intent", "unknown"),
+            "intents": intents,
             "order_number": result.get("order_number"),
             "product_name": result.get("product_name"),
         }
     except (json.JSONDecodeError, AttributeError):
-        return {"intent": "unknown", "order_number": None, "product_name": None}
+        return {"intents": [], "order_number": None, "product_name": None}
 
 
 def generate_response(context: str, message: str) -> str:
     context_section = f"\nMevcut veriler:\n{context}" if context else ""
-    prompt = f"""Sen ShopPilot AI müşteri destek asistanısın.
+    prompt = f"""Sen ShopPilot AI müşteri destek asistanısın. Sipariş, kargo, stok, iade ve şikayet konularında yardımcı olursun. Genel sohbet ve sistem hakkındaki sorulara da nazikçe yanıt verirsin.
 
 Kurallar:
-- Sadece verilen verileri kullan, ek bilgi uydurma
 - Kısa, net ve nazik yanıt ver
 - Türkçe yanıt ver
 - Stok kritikse bunu vurgula
+- Konuyla ilgisi olmayan sorulara nazikçe yanıt ver ve ne konularda yardımcı olabileceğini belirt
 {context_section}
 
 Kullanıcı sorusu: {message}"""
@@ -68,6 +71,34 @@ Kullanıcı sorusu: {message}"""
     if response:
         return response
     return _fallback_response(context)
+
+
+def generate_response_with_system(system_prompt: str, context: str, message: str) -> str:
+    context_section = f"\nVeriler:\n{context}" if context else ""
+    prompt = f"""{system_prompt}
+{context_section}
+
+Kullanıcı sorusu: {message}"""
+
+    response = _call_gemini(prompt)
+    return response if response else (context or "Bilgi alınamadı.")
+
+
+def synthesize_responses(parts: str, user_message: str) -> str:
+    prompt = f"""Birden fazla uzman ajanın cevaplarını tek tutarlı bir yanıta birleştir.
+
+Kullanıcı sorusu: {user_message}
+
+Uzman yanıtları:
+{parts}
+
+Kurallar:
+- Tek akıcı Türkçe yanıt oluştur
+- Tüm bilgileri koru, tekrarları önle
+- Kısa, net ve nazik ol"""
+
+    response = _call_gemini(prompt)
+    return response if response else parts
 
 
 def _fallback_response(context: str) -> str:
