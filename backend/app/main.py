@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.database import create_tables
+from app.database import create_tables, run_migrations
 from app.seed.seed_data import seed
 from app.services import rag_service
 from app.api import orders, shipments, stock, dashboard, chat, analytics
@@ -16,6 +16,7 @@ _POLICY_FILE = Path(__file__).parent.parent.parent / "docs" / "policy.md"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     create_tables()
+    run_migrations()
     seed()
     try:
         rag_service.initialize(str(_POLICY_FILE))
