@@ -27,18 +27,56 @@ ShopPilot AI, gelen mesajı anlayıp uygun uzman agent'a yönlendirir, veritaban
 
 ## Sistem Mimarisi
 
-```text
-Frontend (Next.js)
-  -> /api/chat (FastAPI)
-    -> Supervisor Agent (intent routing)
-      -> Order Agent -----> order_tools (DB)
-      -> Shipment Agent --> shipment_tools (DB)
-      -> Stock Agent ----> stock_tools (DB)
-      -> Policy Agent ---> rag_tools -> policy.md (RAG)
-      -> Complaint Agent (escalation)
-      -> Manager Agent --> dashboard_tools (DB)
-    -> Synthesizer Agent (tek final cevap)
-  <- Chat response
+```mermaid
+flowchart TD
+    User[Kullanıcı]
+    WA[WhatsApp / Twilio]
+    FE[Next.js Frontend<br/>Chat + Dashboard + Analytics]
+    API[FastAPI Backend]
+    SUP[Supervisor Agent<br/>Intent Routing]
+    ORD[Order Agent]
+    SHP[Shipment Agent]
+    STK[Stock Agent]
+    POL[Policy Agent]
+    CMP[Complaint Agent]
+    MGR[Manager Agent]
+    ACT[Action Agent<br/>Ticket Lifecycle]
+    SYN[Synthesizer Agent]
+    DB[(SQLite DB<br/>Orders / Stock / Tickets / ChatLog)]
+    RAG[(Chromadb + Gemini Embedding<br/>Policy RAG)]
+    GEM[Gemini 2.5-Flash]
+
+    User -->|Web Chat| FE
+    User -->|WhatsApp| WA
+    WA -->|webhook| API
+    FE -->|/api/chat| API
+    API --> SUP
+    SUP --> ORD
+    SUP --> SHP
+    SUP --> STK
+    SUP --> POL
+    SUP --> CMP
+    SUP --> MGR
+    SUP --> ACT
+    ORD --> DB
+    SHP --> DB
+    STK --> DB
+    MGR --> DB
+    ACT --> DB
+    CMP --> DB
+    POL --> RAG
+    ORD --> SYN
+    SHP --> SYN
+    STK --> SYN
+    POL --> SYN
+    CMP --> SYN
+    MGR --> SYN
+    ACT --> SYN
+    SUP -.LLM.-> GEM
+    SYN -.LLM.-> GEM
+    SYN -->|Final Response| API
+    API -->|Yanıt| FE
+    API -->|Yanıt| WA
 ```
 
 ## Bileşenler
@@ -165,10 +203,13 @@ Not: Aşağıdaki yollar `docs/screenshots/` altında görselleri bekler.
 - Otomasyon seviyesi: uçtan uca otomatik mesaj işleme
 - Kullanıcı deneyimi: basit ve akıcı chat arayüzü
 
-## Sınırlılıklar (MVP)
-- WhatsApp/e-posta gibi dış kanal entegrasyonlarının prod seviyesi güvenlik/izleme katmanları henüz MVP kapsamı dışındadır.
-- Gerçek operasyonel aksiyonlar (iptal, ticket lifecycle) geliştirilebilir.
-- Test kapsamı ve gözlemlenebilirlik (monitoring) artırılabilir.
+## Sınırlılıklar ve Gelecek Geliştirmeler
+Mevcut MVP uçtan uca çalışan bir prototiptir; aşağıdaki başlıklar hackathon kapsamı dışında bırakılmış olup sonraki sürümlerde ele alınacaktır:
+- **E-posta kanalı entegrasyonu:** Web chat ve WhatsApp/Twilio webhook'u aktif; e-posta kanalı (IMAP/SMTP) ileride eklenecektir.
+- **Gözlemlenebilirlik:** Temel loglama mevcut; üretim için OpenTelemetry / Sentry / structured tracing eklenebilir.
+- **Güvenlik sertleştirmesi:** Rate limiting, webhook imza doğrulama (Twilio signature), rol bazlı yetkilendirme prod öncesi tamamlanacaktır.
+- **Çok kiracılı (multi-tenant) ölçeklenme:** Şu an tek tenant; çoklu işletme/depo izolasyonu yol haritasındadır.
+- **LLM kalite değerlendirme:** Otomatik eval/regression test hattı (golden set + LLM-as-judge) eklenebilir.
 
 ## Türkçe Karakter Desteği
 Bu repo UTF-8 ile kullanılmalıdır.

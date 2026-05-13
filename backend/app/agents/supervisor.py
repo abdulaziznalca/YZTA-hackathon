@@ -21,6 +21,7 @@ def node_supervisor(state: dict) -> dict:
         "extracted_params": {
             "order_number": result.get("order_number"),
             "product_name": result.get("product_name"),
+            "customer_name": result.get("customer_name"),
         },
         "pending_agents": pending,
         "agent_results": [],

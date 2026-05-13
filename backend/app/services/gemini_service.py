@@ -22,7 +22,7 @@ def _call_gemini(prompt: str) -> str:
 
 def route_intents(message: str) -> dict:
     prompt = f"""Aşağıdaki kullanıcı mesajını analiz et ve SADECE şu JSON formatında yanıt ver, başka hiçbir şey yazma:
-{{"intents": [...], "order_number": null, "product_name": null}}
+{{"intents": [...], "order_number": null, "product_name": null, "customer_name": null}}
 
 Intent seçenekleri (birden fazla seçilebilir):
 - shipment_status: kargo/teslimat/nerede/takip soruları
@@ -35,6 +35,7 @@ Intent seçenekleri (birden fazla seçilebilir):
 
 Sipariş numarası varsa "order_number" alanına yaz (sadece rakamları: "128", "1001" gibi).
 Ürün adı varsa "product_name" alanına yaz.
+Kullanıcı adını veya soyadını belirtmişse "customer_name" alanına tam adı yaz (örn: "Ahmet Yılmaz").
 Hiçbir intent uymuyorsa "intents" listesini boş bırak: []
 
 Mesaj: {message}"""
@@ -50,9 +51,10 @@ Mesaj: {message}"""
             "intents": intents,
             "order_number": result.get("order_number"),
             "product_name": result.get("product_name"),
+            "customer_name": result.get("customer_name"),
         }
     except (json.JSONDecodeError, AttributeError):
-        return {"intents": [], "order_number": None, "product_name": None}
+        return {"intents": [], "order_number": None, "product_name": None, "customer_name": None}
 
 
 def generate_response(context: str, message: str) -> str:
