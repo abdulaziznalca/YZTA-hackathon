@@ -20,29 +20,23 @@ def _call_gemini(prompt: str) -> str:
     return ""
 
 
-def detect_intent(message: str) -> dict:
+def route_intents(message: str) -> dict:
     prompt = f"""Aşağıdaki kullanıcı mesajını analiz et ve SADECE şu JSON formatında yanıt ver, başka hiçbir şey yazma:
-{{"intent": "...", "order_number": null, "product_name": null, "customer_name": null, "city": null, "quantity": null, "update_action": null}}
+{{"intents": [...], "order_number": null, "product_name": null, "customer_name": null}}
 
-Intent seçenekleri:
+Intent seçenekleri (birden fazla seçilebilir):
 - shipment_status: kargo/teslimat/nerede/takip soruları
 - order_status: sipariş durumu soruları
+- cancel_order: sipariş iptal etme isteği
 - stock_query: stok/mevcut mu/kaç adet soruları
-- order_cancel: sipariş iptal etme talebi
-- order_create: yeni sipariş oluşturma talebi
-- order_update: siparişi güncelleme (ürün ekle/çıkar) talebi
-- stock_update: stok güncelleme (işletmeci) talebi
 - policy_question: iade/hasar/garanti/politika soruları
 - complaint: şikayet/memnuniyetsizlik
 - manager_summary: yönetici/özet/dashboard/rapor talepleri
-- unknown: diğer tüm sorular
 
 Sipariş numarası varsa "order_number" alanına yaz (sadece rakamları: "128", "1001" gibi).
 Ürün adı varsa "product_name" alanına yaz.
-Müşteri adı/soyadı (varsa) "customer_name" alanına yaz.
-Şehir bilgisi (varsa) "city" alanına yaz.
-Miktar (varsa) "quantity" alanına sayı yaz.
-"update_action": sadece "add" veya "remove" olabilir (sipariş güncellemede ürün ekle/çıkar niyeti varsa).
+Kullanıcı adını veya soyadını belirtmişse "customer_name" alanına tam adı yaz (örn: "Ahmet Yılmaz").
+Hiçbir intent uymuyorsa "intents" listesini boş bırak: []
 
 Mesaj: {message}"""
 
@@ -50,36 +44,28 @@ Mesaj: {message}"""
     clean = re.sub(r"```(?:json)?\s*\n?", "", raw).strip().rstrip("`").strip()
     try:
         result = json.loads(clean)
+        intents = result.get("intents", [])
+        if not isinstance(intents, list):
+            intents = []
         return {
-            "intent": result.get("intent", "unknown"),
+            "intents": intents,
             "order_number": result.get("order_number"),
             "product_name": result.get("product_name"),
             "customer_name": result.get("customer_name"),
-            "city": result.get("city"),
-            "quantity": result.get("quantity"),
-            "update_action": result.get("update_action"),
         }
     except (json.JSONDecodeError, AttributeError):
-        return {
-            "intent": "unknown",
-            "order_number": None,
-            "product_name": None,
-            "customer_name": None,
-            "city": None,
-            "quantity": None,
-            "update_action": None,
-        }
+        return {"intents": [], "order_number": None, "product_name": None, "customer_name": None}
 
 
 def generate_response(context: str, message: str) -> str:
     context_section = f"\nMevcut veriler:\n{context}" if context else ""
-    prompt = f"""Sen ShopPilot AI müşteri destek asistanısın.
+    prompt = f"""Sen ShopPilot AI müşteri destek asistanısın. Sipariş, kargo, stok, iade ve şikayet konularında yardımcı olursun. Genel sohbet ve sistem hakkındaki sorulara da nazikçe yanıt verirsin.
 
 Kurallar:
-- Sadece verilen verileri kullan, ek bilgi uydurma
 - Kısa, net ve nazik yanıt ver
 - Türkçe yanıt ver
 - Stok kritikse bunu vurgula
+- Konuyla ilgisi olmayan sorulara nazikçe yanıt ver ve ne konularda yardımcı olabileceğini belirt
 {context_section}
 
 Kullanıcı sorusu: {message}"""
@@ -88,6 +74,34 @@ Kullanıcı sorusu: {message}"""
     if response:
         return response
     return _fallback_response(context)
+
+
+def generate_response_with_system(system_prompt: str, context: str, message: str) -> str:
+    context_section = f"\nVeriler:\n{context}" if context else ""
+    prompt = f"""{system_prompt}
+{context_section}
+
+Kullanıcı sorusu: {message}"""
+
+    response = _call_gemini(prompt)
+    return response if response else (context or "Bilgi alınamadı.")
+
+
+def synthesize_responses(parts: str, user_message: str) -> str:
+    prompt = f"""Birden fazla uzman ajanın cevaplarını tek tutarlı bir yanıta birleştir.
+
+Kullanıcı sorusu: {user_message}
+
+Uzman yanıtları:
+{parts}
+
+Kurallar:
+- Tek akıcı Türkçe yanıt oluştur
+- Tüm bilgileri koru, tekrarları önle
+- Kısa, net ve nazik ol"""
+
+    response = _call_gemini(prompt)
+    return response if response else parts
 
 
 def _fallback_response(context: str) -> str:
