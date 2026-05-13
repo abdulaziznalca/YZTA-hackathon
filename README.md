@@ -1,22 +1,29 @@
-# ShopPilot AI - KOBI ve Kooperatifler Icin Musteri Iletisimi Otomasyonu
+# ShopPilot AI - KOBİ ve Kooperatifler İçin Müşteri İletişimi Otomasyonu
 
-ShopPilot AI, KOBI ve kooperatiflerin siparis, kargo, stok ve politika sorularini dogal dilde yonetmek icin gelistirilmis coklu-agent tabanli bir prototiptir.
+ShopPilot AI, KOBİ ve kooperatiflerin sipariş, kargo, stok ve politika sorularını doğal dilde yönetmek için geliştirilmiş çoklu-agent tabanlı bir hackathon prototipidir.
 
-## Problem
-Kucuk ve orta olcekli isletmelerde musteri iletisimi genellikle manuel yurutulur:
-- "Siparisim nerede?"
-- "Bu urun stokta var mi?"
-- "Iade kosullari nedir?"
+## Hackathon Problem Tanımı
+Küçük ve orta ölçekli işletmelerde müşteri iletişimi genellikle manuel yürütülür:
+- "Siparişim nerede?"
+- "Bu ürün stokta var mı?"
+- "İade koşulları nedir?"
 
-Bu surec operasyonel zaman kaybi, insan hatasi ve tutarsiz musteri deneyimi olusturur.
+Bu süreç operasyonel zaman kaybı, insan hatası ve tutarsız müşteri deneyimi oluşturur.
 
-## Cozum Ozeti
-ShopPilot AI, gelen mesaji anlayip uygun uzman agent'a yonlendirir, veritabanindan ve politika dokumanindan bilgi ceker, tek ve tutarli bir yanit uretir.
+## Çözüm Özeti
+ShopPilot AI, gelen mesajı anlayıp uygun uzman agent'a yönlendirir, veritabanı ve politika dokümanından bilgi çeker, tek ve tutarlı bir yanıt üretir.
 
-- Agent-based mimari (Supervisor + Specialist Agents + Synthesizer)
-- Dogal dil anlama/uretme (Gemini)
-- Veri ile etkilesim (siparis/kargo/stok)
+- Agent tabanlı mimari (Supervisor + Specialist Agents + Synthesizer)
+- Doğal dil anlama/üretme (Gemini)
+- Veri ile etkileşim (sipariş/kargo/stok)
 - RAG benzeri politika arama (embedding + retrieval)
+- Çoklu kanal uyarlanabilirliği (web chat + WhatsApp entegrasyonuna uygun yapı)
+
+## Neden Hackathon'a Uygun?
+- Gerçek bir operasyonel probleme odaklıdır.
+- Yapay zekâyı sadece sohbet değil, karar/veri akışı içinde kullanır.
+- Uçtan uca çalışan MVP sunar (chat + dashboard + analytics + backend orchestration).
+- Hızla demo yapılabilir ve etki net şekilde gösterilebilir.
 
 ## Sistem Mimarisi
 
@@ -34,46 +41,46 @@ Frontend (Next.js)
   <- Chat response
 ```
 
-### Bilesenler
-- `frontend/`: Next.js tabanli chat, dashboard ve analytics arayuzu
-- `backend/app/api`: REST endpointleri
+## Bileşenler
+- `frontend/`: Next.js tabanlı chat, dashboard ve analytics arayüzü
+- `backend/app/api`: REST endpoint'leri
 - `backend/app/agents`: LangGraph ile agent orkestrasyonu
-- `backend/app/tools`: Agentlarin veri/servis araclari
+- `backend/app/tools`: Agent'ların veri/servis araçları
 - `backend/app/services`: Gemini, RAG, analytics servisleri
 - `backend/app/models`: SQLAlchemy veri modelleri
-- `docs/policy.md`: iade/hasar/garanti/kargo politikalari
+- `docs/policy.md`: İade/hasar/garanti/kargo politikaları
 
-## Agent Akisi
-1. Kullanici mesaji `/api/chat` endpointine gelir.
-2. `supervisor` intentleri cikarir (`order_status`, `shipment_status`, `stock_query`, `policy_question`, `complaint`, `manager_summary`).
-3. Uygun specialist agent(lar) ilgili tool'u cagirir.
-4. Birden fazla sonuc varsa `synthesizer` tek ve akici cevapta birlestirir.
-5. Sonuc `ChatLog` tablosuna intent ve cikarilan parametrelerle kaydedilir.
+## Agent Akışı
+1. Kullanıcı mesajı `/api/chat` endpoint'ine gelir.
+2. `supervisor` intent'leri çıkarır (`order_status`, `shipment_status`, `stock_query`, `policy_question`, `complaint`, `manager_summary`).
+3. Uygun specialist agent(lar) ilgili tool'u çağırır.
+4. Birden fazla sonuç varsa `synthesizer` tek ve akıcı cevapta birleştirir.
+5. Sonuç `ChatLog` tablosuna intent ve çıkarılan parametrelerle kaydedilir.
 
-## Yapay Zeka Yaklasimi
+## Yapay Zekâ Yaklaşımı
 
 ### 1) Intent Routing
-- Model, mesaji siniflandirir ve JSON formatinda intent + parametre cikarir.
-- Ornek parametreler: `order_number`, `product_name`.
+- Model, mesajı sınıflandırır ve JSON formatında intent + parametre çıkarır.
+- Örnek parametreler: `order_number`, `product_name`.
 
-### 2) Specialist Agent Yanit Uretimi
-- Her agent alan-ozel bir system prompt ile calisir.
-- Yanitlar sadece araclardan (tool) gelen veriye dayandirilir.
+### 2) Specialist Agent Yanıt Üretimi
+- Her agent alan-özel bir system prompt ile çalışır.
+- Yanıtlar sadece araçlardan (tool) gelen veriye dayandırılır.
 
 ### 3) RAG Benzeri Politika Cevaplama
-- `docs/policy.md` chunk'lanir ve embedding'lenir.
-- Politika sorularinda benzer parcalar retrieval ile cekilir.
+- `docs/policy.md` chunk'lanır ve embedding'lenir.
+- Politika sorularında benzer parçalar retrieval ile çekilir.
 
-### 4) Coklu Cevap Sentezi
-- Birden fazla agent sonucu tek bir musteri yanitina donusturulur.
+### 4) Çoklu Cevap Sentezi
+- Birden fazla agent sonucu tek bir müşteri yanıtına dönüştürülür.
 
-## Veri Modeli (Ozet)
-- `Product`: urun, stok, fiyat
-- `Order`: siparis no, durum, tahmini teslim, tutar
-- `Shipment`: kargo firmasi, takip no, konum, durum
-- `ChatLog`: kullanici mesaji, AI yaniti, intent, urun/siparis parametreleri
+## Veri Modeli (Özet)
+- `Product`: ürün, stok, fiyat
+- `Order`: sipariş no, durum, tahmini teslim, tutar
+- `Shipment`: kargo firması, takip no, konum, durum
+- `ChatLog`: kullanıcı mesajı, AI yanıtı, intent, ürün/sipariş parametreleri
 
-## Kurulum ve Calistirma
+## Kurulum ve Çalıştırma
 
 ## Gereksinimler
 - Python 3.11+
@@ -87,7 +94,7 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 cp ../.env.example .env
-# .env icine GEMINI_API_KEY ekleyin
+# .env içine GEMINI_API_KEY ekleyin
 uvicorn app.main:app --reload --port 8000
 ```
 
@@ -101,52 +108,74 @@ npm run dev
 Frontend: `http://localhost:3000`  
 Backend: `http://localhost:8000`
 
-## Ortam Degiskenleri
-`.env` (backend icin):
+## Ortam Değişkenleri
+`.env` (backend için):
 - `GEMINI_API_KEY`
-- `DATABASE_URL` (varsayilan: `sqlite:///./shoppilot.db`)
-- `CORS_ORIGINS` (varsayilan: `http://localhost:3000`)
+- `DATABASE_URL` (varsayılan: `sqlite:///./shoppilot.db`)
+- `CORS_ORIGINS` (varsayılan: `http://localhost:3000`)
 
-## API Endpointleri (Ozet)
+## API Endpoint'leri (Özet)
 - `POST /api/chat` -> Agent orkestrasyonlu sohbet
-- `GET /api/orders` -> Siparis listesi
-- `GET /api/orders/by-number/{order_number}` -> Siparis detayi
+- `GET /api/orders` -> Sipariş listesi
+- `GET /api/orders/by-number/{order_number}` -> Sipariş detayı
 - `GET /api/shipments/by-order/{order_id}` -> Kargo bilgisi
 - `GET /api/stock` -> Stok listesi
-- `GET /api/stock/search?q=...` -> Urun arama
-- `GET /api/dashboard/summary` -> Yonetici ozet metrikleri
-- `GET /api/analytics/summary?hours=24` -> Etkilesim analitigi
+- `GET /api/stock/search?q=...` -> Ürün arama
+- `GET /api/dashboard/summary` -> Yönetici özet metrikleri
+- `GET /api/analytics/summary?hours=24` -> Etkileşim analitiği
 
 ## Demo Senaryosu
-Asagidaki sorularla kisa demo yapilabilir:
+Aşağıdaki sorularla kısa demo yapılabilir:
 
-1. `128 numarali siparisim nerede?`
-- Beklenen: Siparis/kargo durumu + tahmini teslim
+1. `128 numaralı siparişim nerede?`
+Beklenen: Sipariş/kargo durumu + tahmini teslim.
 
-2. `Lavanta sabunu stokta var mi?`
-- Beklenen: Stok adedi, durum (kritik/mevcut/tukendi), fiyat
+2. `Lavanta sabunu stokta var mı?`
+Beklenen: Stok adedi, durum (kritik/mevcut/tükendi), fiyat.
 
-3. `Iade politikaniz nedir?`
-- Beklenen: Politika dokumanindan retrieval tabanli yanit
+3. `İade politikanız nedir?`
+Beklenen: Politika dokümanından retrieval tabanlı yanıt.
 
-4. `Bugunku yonetici ozeti ver`
-- Beklenen: Toplam siparis, geciken, kritik stok ozetleri
+4. `Bugünkü yönetici özeti ver`
+Beklenen: Toplam sipariş, geciken, kritik stok özetleri.
 
-5. `Urun hasarli geldi`
-- Beklenen: Sikayet karsilama + yoneticiye escalasyon bilgisi
+5. `Ürün hasarlı geldi`
+Beklenen: Şikayet karşılama + yöneticiye escalation bilgisi.
+
+## Ekran Görüntüleri
+Not: Aşağıdaki yollar `docs/screenshots/` altında görselleri bekler.
+
+### Chat - Stok Sorgusu
+![Chat Stok Sorgusu](docs/screenshots/chat-stock.png)
+
+### Dashboard - Operasyon Özeti
+![Dashboard](docs/screenshots/dashboard.png)
+
+### Analytics - Talep ve Uyarılar
+![Analytics](docs/screenshots/analytics.png)
+
+### WhatsApp/Twilio Entegrasyon Akışı
+![WhatsApp Twilio](docs/screenshots/whatsapp-twilio.png)
 
 ## Hackathon Kriterlerine Hizalama
-- Yapay zeka kullanimi: Intent routing + response generation
-- Agent mimarisi: Supervisor + specialist yapisi
-- Veri ile calisma: Siparis, kargo, stok, chat log
-- Aksiyon alabilen sistem: Sikayet escalasyonu ve yonetici akisi
-- Otomasyon seviyesi: Uctan uca otomatik mesaj isleme
-- Kullanici deneyimi: Basit ve akici chat arayuzu
+- Yapay zekâ kullanımı: intent routing + response generation
+- Agent mimarisi: supervisor + specialist yapısı
+- Veri ile çalışma: sipariş, kargo, stok, chat log
+- Aksiyon alabilen sistem: şikayet escalation ve yönetici akışı
+- Otomasyon seviyesi: uçtan uca otomatik mesaj işleme
+- Kullanıcı deneyimi: basit ve akıcı chat arayüzü
 
-## Sinirliliklar (MVP)
-- WhatsApp/e-posta gibi dis kanal entegrasyonlari sonraki adim
-- Gercek operasyonel aksiyonlar (iptal, ticket lifecycle) gelistirilebilir
-- Test kapsami ve gozlemlenebilirlik (monitoring) arttirilabilir
+## Sınırlılıklar (MVP)
+- WhatsApp/e-posta gibi dış kanal entegrasyonlarının prod seviyesi güvenlik/izleme katmanları henüz MVP kapsamı dışındadır.
+- Gerçek operasyonel aksiyonlar (iptal, ticket lifecycle) geliştirilebilir.
+- Test kapsamı ve gözlemlenebilirlik (monitoring) artırılabilir.
 
-## Guvenlik Notu
-Gercek API anahtarlari repoya commit edilmemelidir. Yalnizca `.env.example` takip edilmeli, gercek anahtarlar ortam degiskeni olarak yonetilmelidir.
+## Türkçe Karakter Desteği
+Bu repo UTF-8 ile kullanılmalıdır.
+
+- Dosyaları UTF-8 olarak kaydedin.
+- Terminal/IDE encoding ayarını UTF-8 yapın.
+- Veritabanında Türkçe karakterli veri için UTF-8 uyumlu bağlantı kullanın.
+
+## Güvenlik Notu
+Gerçek API anahtarları repoya commit edilmemelidir. Yalnızca `.env.example` takip edilmeli, gerçek anahtarlar ortam değişkeni olarak yönetilmelidir.
